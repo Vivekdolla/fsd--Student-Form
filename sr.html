@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Registration</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #22c55e;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+    }
+
+    * { box-sizing: border-box; font-family: "Segoe UI", Tahoma, sans-serif; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 20% 20%, #1f2937, #020617);
+      color: var(--text);
+    }
+
+    .card {
+      width: min(92vw, 720px);
+      background: linear-gradient(145deg, #111827, #020617);
+      border: 1px solid #1f2937;
+      border-radius: 20px;
+      padding: 28px 26px 32px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.6);
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+      -webkit-background-clip: text;
+      color: transparent;
+      text-align: center;
+    }
+
+    form { display: grid; gap: 16px; }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    label { font-size: .9rem; color: var(--muted); }
+
+    input, select {
+      width: 100%;
+      margin-top: 6px;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: var(--text);
+      outline: none;
+      transition: border .2s, box-shadow .2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(34,197,94,.25);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 6px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 22px;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+      color: #022c22;
+      transition: transform .12s, box-shadow .12s;
+    }
+
+    button:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(34,197,94,.35); }
+    button.secondary { background: #111827; color: var(--text); border: 1px solid #374151; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 22px;
+      font-size: .92rem;
+    }
+
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #1f2937;
+      text-align: left;
+    }
+
+    th { color: var(--muted); font-weight: 600; }
+
+    .empty { text-align: center; color: var(--muted); padding: 16px 0; }
+
+    footer {
+      margin-top: 14px;
+      text-align: center;
+      font-size: .78rem;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Student Registration</h1>
+
+    <form id="studentForm">
+      <div class="grid">
+        <div>
+          <label>Name
+            <input type="text" name="name" required placeholder="Full Name" />
+          </label>
+        </div>
+        <div>
+          <label>Email
+            <input type="email" name="email" required placeholder="name@example.com" />
+          </label>
+        </div>
+        <div>
+          <label>Date of Birth
+            <input type="date" name="dob" required />
+          </label>
+        </div>
+        <div>
+          <label>Department
+            <select name="department" required>
+              <option value="">Select</option>
+              <option>Computer Science</option>
+              <option>Information Technology</option>
+              <option>Electronics</option>
+              <option>Mechanical</option>
+              <option>Civil</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>Phone
+            <input type="tel" name="phone" pattern="[0-9]{10}" required placeholder="10 digit" />
+          </label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="submit">Save</button>
+        <button type="reset" class="secondary">Reset</button>
+      </div>
+    </form>
+
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>DOB</th>
+          <th>Department</th>
+          <th>Phone</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="5" class="empty">No records yet</td></tr>
+      </tbody>
+    </table>
+
+    <footer>Demo UI — connect to backend for real database storage</footer>
+  </div>
+
+  <script>
+    const form = document.getElementById('studentForm');
+    const tbody = document.querySelector('#dataTable tbody');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      // Send to backend (PHP/Node/etc.)
+      await fetch('save_student.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      loadStudents();
+      form.reset();
+    });
+
+    async function loadStudents() {
+      const res = await fetch('get_students.php');
+      const rows = await res.json();
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No records yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.name}</td>
+          <td>${r.email}</td>
+          <td>${r.dob}</td>
+          <td>${r.department}</td>
+          <td>${r.phone}</td>
+        </tr>`).join('');
+    }
+
+    loadStudents();
+  </script>
+</body>
+</html>
